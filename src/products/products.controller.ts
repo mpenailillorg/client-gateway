@@ -13,19 +13,19 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError } from 'rxjs';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { PRODUCT_SERVICE } from 'src/config/services';
+import { NATS_SERVICE } from 'src/config/services';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
   constructor(
-    @Inject(PRODUCT_SERVICE) private readonly productsClient: ClientProxy,
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy,
   ) {}
 
   @Post()
   createProduct(@Body() createProductDto: CreateProductDto) {
-    return this.productsClient.send(
+    return this.client.send(
       { cmd: 'create_product' },
       createProductDto,
     );
@@ -33,7 +33,7 @@ export class ProductsController {
 
   @Get()
   findAllProducts(@Query() paginationDto: PaginationDto) {
-    return this.productsClient.send(
+    return this.client.send(
       { cmd: 'find_all_products' },
       paginationDto,
     ); // se usa send porque esperamos recibir una respuesta del servicio al que nos conectamos
@@ -41,7 +41,7 @@ export class ProductsController {
 
   @Get(':id')
   async findOne(@Param('id') id: number) {
-    return this.productsClient.send({ cmd: 'find_one_product' }, { id }).pipe(
+    return this.client.send({ cmd: 'find_one_product' }, { id }).pipe(
       catchError((err) => {
         throw new RpcException(err);
       }),
@@ -59,7 +59,7 @@ export class ProductsController {
 
   @Delete(':id')
   deleteProduct(@Param('id') id: string) {
-    return this.productsClient.send({ cmd: 'delete_product' }, { id }).pipe(
+    return this.client.send({ cmd: 'delete_product' }, { id }).pipe(
       catchError((err) => {
         throw new RpcException(err);
       }),
@@ -73,7 +73,7 @@ export class ProductsController {
   ) {
     console.log('update', updateProductDto);
 
-    return this.productsClient
+    return this.client
       .send({ cmd: 'update_product' }, { id, ...updateProductDto })
       .pipe(
         catchError((err) => {
